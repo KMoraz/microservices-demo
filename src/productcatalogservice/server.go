@@ -208,7 +208,10 @@ func initProfiling(service, version string) {
 	log.Warn("could not initialize Stackdriver profiler after retrying, giving up")
 }
 
-type productCatalog struct{}
+type productCatalog struct{
+	pb.UnimplementedProductCatalogServiceServer
+	healthpb.UnimplementedHealthServer
+}
 
 func readCatalogFile(catalog *pb.ListProductsResponse) error {
 	catalogMutex.Lock()

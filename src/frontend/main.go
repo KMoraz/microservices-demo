@@ -33,6 +33,7 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -139,7 +140,7 @@ func main() {
 		Handler:     handler,
 		Propagation: &b3.HTTPFormat{}}
 
-	log.Infof("starting server on " + addr + ":" + srvPort)
+	log.Infof("starting server on %s:%s", addr, srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
 }
 
@@ -253,7 +254,7 @@ func mustMapEnv(target *string, envKey string) {
 func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 	var err error
 	*conn, err = grpc.DialContext(ctx, addr,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithTimeout(time.Second*3),
 		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}))
 	if err != nil {

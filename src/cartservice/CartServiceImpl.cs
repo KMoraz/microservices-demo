@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using cartservice.interfaces;
 using Grpc.Core;
 using Hipstershop;
-using static Hipstershop.CartService;
 
 namespace cartservice
 {
     // Cart wrapper to deal with grpc communication
-    internal class CartServiceImpl : CartServiceBase
+    public class CartServiceImpl : CartService.CartServiceBase
     {
         private ICartStore cartStore;
         private readonly static Empty Empty = new Empty();
@@ -34,19 +30,19 @@ namespace cartservice
             this.cartStore = cartStore;
         }
 
-        public async override Task<Empty> AddItem(AddItemRequest request, Grpc.Core.ServerCallContext context)
+        public override async Task<Empty> AddItem(AddItemRequest request, ServerCallContext context)
         {
             await cartStore.AddItemAsync(request.UserId, request.Item.ProductId, request.Item.Quantity);
             return Empty;
         }
 
-        public async override Task<Empty> EmptyCart(EmptyCartRequest request, ServerCallContext context)
+        public override async Task<Empty> EmptyCart(EmptyCartRequest request, ServerCallContext context)
         {
             await cartStore.EmptyCartAsync(request.UserId);
             return Empty;
         }
 
-        public override Task<Hipstershop.Cart> GetCart(GetCartRequest request, ServerCallContext context)
+        public override Task<Cart> GetCart(GetCartRequest request, ServerCallContext context)
         {
             return cartStore.GetCartAsync(request.UserId);
         }

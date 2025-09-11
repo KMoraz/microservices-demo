@@ -24,14 +24,15 @@ import (
 	"go.opencensus.io/plugin/ocgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
 func TestServer(t *testing.T) {
 	ctx := context.Background()
-	addr := run(0)
+	addr := run("0")
 	conn, err := grpc.Dial(addr,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}))
 	if err != nil {
 		t.Fatal(err)

@@ -9,8 +9,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-        classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.7.1"
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.4'
+        classpath "gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.9"
     }
 }
 
@@ -27,13 +27,13 @@ repositories {
 group = "adservice"
 version = "0.1.0-SNAPSHOT"
 
-def opencensusVersion = "0.18.0"
-def grpcVersion = "1.17.0"
-def jacksonVersion = "2.9.6"
+def opencensusVersion = "0.31.1"
+def grpcVersion = "1.49.0"
+def jacksonVersion = "2.13.3"
 
 tasks.withType(JavaCompile) {
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
 }
 
 ext {
@@ -43,11 +43,12 @@ ext {
 
 dependencies {
     if (speed) {
-        compile fileTree(dir: offlineCompile, include: '*.jar')
+        implementation fileTree(dir: offlineCompile, include: '*.jar')
     } else {
-        compile "com.google.api.grpc:proto-google-common-protos:1.12.0",
+        implementation "com.google.api.grpc:proto-google-common-protos:1.12.0",
                 "io.opencensus:opencensus-api:${opencensusVersion}",
                 "io.opencensus:opencensus-contrib-grpc-util:${opencensusVersion}",
+                "io.opencensus:opencensus-contrib-grpc-metrics:${opencensusVersion}",
                 "io.opencensus:opencensus-exporter-trace-jaeger:${opencensusVersion}",
                 "io.opencensus:opencensus-exporter-stats-stackdriver:${opencensusVersion}",
                 "io.opencensus:opencensus-exporter-trace-stackdriver:${opencensusVersion}",
@@ -58,7 +59,7 @@ dependencies {
                 "io.grpc:grpc-services:${grpcVersion}",
                 "org.apache.logging.log4j:log4j-core:2.11.1"
 
-        runtime "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
+        runtimeOnly "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
                 "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
                 "io.opencensus:opencensus-contrib-log-correlation-log4j2:${opencensusVersion}",
                 "io.opencensus:opencensus-impl:${opencensusVersion}",
@@ -106,9 +107,9 @@ startScripts.enabled = false
 // This to cache dependencies during Docker image building. First build will take time.
 // Subsequent build will be incremental.
 task downloadRepos(type: Copy) {
-    from configurations.compile
+    from configurations.implementation
     into offlineCompile
-    from configurations.runtime
+    from configurations.runtimeOnly
     into offlineCompile
 }
 
@@ -116,7 +117,7 @@ task adService(type: CreateStartScripts) {
     mainClassName = 'hipstershop.AdService'
     applicationName = 'AdService'
     outputDir = new File(project.buildDir, 'tmp')
-    classpath = jar.outputs.files + project.configurations.runtime
+    classpath = jar.outputs.files + project.configurations.runtimeClasspath
     defaultJvmOpts =
         ["-Dlog4j2.contextDataInjector=io.opencensus.contrib.logcorrelation.log4j2.OpenCensusTraceContextDataInjector",
 	"-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=adservice,-cprof_service_version=1.0.0"]
@@ -126,7 +127,7 @@ task adServiceClient(type: CreateStartScripts) {
     mainClassName = 'hipstershop.AdServiceClient'
     applicationName = 'AdServiceClient'
     outputDir = new File(project.buildDir, 'tmp')
-    classpath = jar.outputs.files + project.configurations.runtime
+    classpath = jar.outputs.files + project.configurations.runtimeClasspath
     defaultJvmOpts =
         ["-Dlog4j2.contextDataInjector=io.opencensus.contrib.logcorrelation.log4j2.OpenCensusTraceContextDataInjector",
 	"-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=adserviceclient,-cprof_service_version=1.0.0"]
