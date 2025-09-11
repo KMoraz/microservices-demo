@@ -1,6 +1,8 @@
 module productcatalogservice
 
-go 1.17
+go 1.24.0
+
+toolchain go1.24.3
 
 require (
 	cloud.google.com/go/profiler v0.4.3
