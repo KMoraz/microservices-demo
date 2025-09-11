@@ -1,6 +1,6 @@
 module checkoutservice
 
-go 1.24.3
+go 1.17
 
 require (
 	cloud.google.com/go/profiler v0.4.3
