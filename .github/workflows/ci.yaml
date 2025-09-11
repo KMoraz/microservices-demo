@@ -33,7 +33,7 @@ jobs:
         sudo mv skaffold /usr/local/bin
     - name: Install Go dependencies
       run: |
-        go get -u github.com/golang/dep/cmd/dep
+        go install github.com/golang/dep/cmd/dep@latest
         cd src/checkoutservice && dep ensure && cd ../..
         cd src/frontend && dep ensure && cd ../..
         cd src/productcatalogservice && dep ensure && cd ../..
