@@ -1,0 +1,63 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.7
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 2.1
+    - name: Install Skaffold
+      run: |
+        curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/v0.20.0/skaffold-linux-amd64
+        chmod +x skaffold
+        sudo mv skaffold /usr/local/bin
+    - name: Install Go dependencies
+      run: |
+        go get -u github.com/golang/dep/cmd/dep
+        cd src/checkoutservice && dep ensure && cd ../..
+        cd src/frontend && dep ensure && cd ../..
+        cd src/productcatalogservice && dep ensure && cd ../..
+        cd src/shippingservice && dep ensure && cd ../..
+    - name: Install Node.js dependencies
+      run: |
+        cd src/currencyservice && npm install && cd ../..
+        cd src/paymentservice && npm install && cd ../..
+    - name: Install Python dependencies
+      run: |
+        pip install -r src/emailservice/requirements.txt
+        pip install -r src/recommendationservice/requirements.txt
+        pip install -r src/loadgenerator/requirements.txt
+    - name: Install .NET dependencies
+      run: dotnet restore src/cartservice/cartservice.csproj
+    - name: Build Java service
+      run: cd src/adservice && ./gradlew build && cd ../..
+    - name: Run Go tests
+      run: |
+        cd src/checkoutservice && go test ./... && cd ../..
+        cd src/frontend && go test ./... && cd ../..
+        cd src/productcatalogservice && go test ./... && cd ../..
+        cd src/shippingservice && go test ./... && cd ../..
+    - name: Run .NET tests
+      run: dotnet test tests/cartservice/cartservice.tests.csproj
+    - name: Build with Skaffold
+      run: skaffold build --profile travis-ci
