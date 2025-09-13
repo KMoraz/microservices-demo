@@ -25,7 +25,7 @@ import (
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"go.opencensus.io/exporter/jaeger"
+	"contrib.go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -60,6 +60,8 @@ func init() {
 }
 
 type checkoutService struct {
+	pb.UnimplementedCheckoutServiceServer
+	healthpb.UnimplementedHealthServer
 	productCatalogSvcAddr string
 	cartSvcAddr           string
 	currencySvcAddr       string
@@ -206,7 +208,7 @@ func (cs *checkoutService) PlaceOrder(ctx context.Context, req *pb.PlaceOrderReq
 
 	prep, err := cs.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserId, req.UserCurrency, req.Address)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to prepare order: %v", err)
 	}
 
 	total := pb.Money{CurrencyCode: req.UserCurrency,

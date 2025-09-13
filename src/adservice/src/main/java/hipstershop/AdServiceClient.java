@@ -55,7 +55,7 @@ public class AdServiceClient {
         ManagedChannelBuilder.forAddress(host, port)
             // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
             // needing certificates.
-            .usePlaintext(true)
+            .usePlaintext()
             .build());
   }
 
@@ -130,7 +130,7 @@ public class AdServiceClient {
     final int serverPort = getPortOrDefaultFromArgs(args, 2, 9555);
 
     // Registers all RPC views.
-    RpcViews.registerAllGrpcViews();
+    RpcViews.registerAllViews();
 
     // Registers Stackdriver exporters.
     long sleepTime = 10; /* seconds */

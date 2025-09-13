@@ -1,0 +1,62 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.17.x'
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+    - name: Install Skaffold
+      run: |
+        curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/v0.20.0/skaffold-linux-amd64
+        chmod +x skaffold
+        sudo mv skaffold /usr/local/bin
+    - name: Tidy Go modules
+      run: |
+        (cd src/checkoutservice && go mod tidy)
+        (cd src/frontend && go mod tidy)
+        (cd src/productcatalogservice && go mod tidy)
+        (cd src/shippingservice && go mod tidy)
+    - name: Install Node.js dependencies
+      run: |
+        cd src/currencyservice && npm install && cd ../..
+        cd src/paymentservice && npm install && cd ../..
+    - name: Install Python dependencies
+      run: |
+        pip install -r src/emailservice/requirements.txt
+        pip install -r src/recommendationservice/requirements.txt
+        pip install -r src/loadgenerator/requirements.txt
+    - name: Install .NET dependencies
+      run: dotnet restore src/cartservice/cartservice.csproj
+    - name: Build Java service
+      run: cd src/adservice && ./gradlew build && cd ../..
+    - name: Run Go tests
+      run: |
+        (cd src/checkoutservice && go test ./...)
+        (cd src/frontend && go test ./...)
+        (cd src/productcatalogservice && go test ./...)
+        (cd src/shippingservice && go test ./...)
+    - name: Run .NET tests
+      run: dotnet test tests/cartservice/cartservice.tests.csproj
+    - name: Build with Skaffold
+      run: skaffold build --profile travis-ci
